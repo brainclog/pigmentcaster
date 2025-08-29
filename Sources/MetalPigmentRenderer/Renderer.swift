@@ -44,6 +44,38 @@ final class Canvas {
         return (y * width + x) * bagSize
     }
 
+   func applyBrushSquare(pigmentID: UInt8, cx: Int, cy: Int, side: Int, intensity: Float) {
+       let baseN = Int(Float(bagSize) * intensity)
+       let halfSide = side / 2
+       let sigma = Float(side) / 3.0   // adjust spread softness, smaller divisor = harder edges
+
+       for y in max(0, cy - halfSide)...min(height-1, cy + halfSide) {
+           for x in max(0, cx - halfSide)...min(width-1, cx + halfSide) {
+               let dx = Float(x - cx)
+               let dy = Float(y - cy)
+
+               // separable Gaussian falloff
+               let w = exp(-(dx*dx) / (2.0 * sigma * sigma)) *
+                       exp(-(dy*dy) / (2.0 * sigma * sigma))
+
+               let nAddWeighted = Int(Float(baseN) * w)
+               if nAddWeighted == 0 { continue }
+
+               let base = bagOffset(x: x, y: y)
+               if nAddWeighted >= bagSize {
+                   for i in 0..<bagSize { data[base + i] = pigmentID }
+               } else {
+                   let keep = bagSize - nAddWeighted
+                   for i in 0..<keep {
+                       data[base + i] = data[base + bagSize - keep + i]
+                   }
+                   for i in 0..<nAddWeighted {
+                       data[base + keep + i] = pigmentID
+                   }
+               }
+           }
+       }
+   }
     // mimic appending pigment and capping to bagSize (drop oldest)
     func applyBrush(pigmentID: UInt8, cx: Int, cy: Int, radius: Int, intensity: Float) {
         let baseN = Int(Float(bagSize) * intensity)
@@ -237,11 +269,17 @@ struct Main {
             let width = 1200, height = 600, bagSize = 500
             let canvas = Canvas(width: width, height: height, bagSize: bagSize)
 
-            // pigment IDs: cyan=0, magenta=1, yellow=2
-            canvas.applyBrush(pigmentID: 0, cx: 400, cy: 300, radius: 300, intensity: 0.8)
-            canvas.applyBrush(pigmentID: 1, cx: 800, cy: 300, radius: 300, intensity: 0.7)
-            canvas.applyBrush(pigmentID: 2, cx: 600, cy: 300, radius: 150, intensity: 0.8)
+//   func applyBrushSquare(pigmentID: UInt8, cx: Int, cy: Int, side: Int, intensity: Float)
 
+            // pigment IDs: cyan=0, magenta=1, yellow=2
+//            canvas.applyBrush(pigmentID: 0, cx: 400, cy: 300, radius: 300, intensity: 0.8)
+//            canvas.applyBrush(pigmentID: 1, cx: 800, cy: 300, radius: 300, intensity: 0.7)
+//            canvas.applyBrush(pigmentID: 2, cx: 600, cy: 300, radius: 150, intensity: 0.8)
+
+
+            canvas.applyBrushSquare(pigmentID: 0, cx: 400, cy: 300, side: 300, intensity: 0.8)
+            canvas.applyBrushSquare(pigmentID: 1, cx: 800, cy: 300, side: 300, intensity: 0.7)
+            canvas.applyBrushSquare(pigmentID: 2, cx: 600, cy: 300, side: 150, intensity: 0.8)
             let renderer = try Renderer()
             let outURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
                 .appendingPathComponent("paint_strokes.png")
