@@ -88,6 +88,10 @@ kernel void render_canvas_kernel(
     G *= brightness;
     B *= brightness;
 
+    // clamp before gamma
+    R = min(R * brightness, 1.0);
+    G = min(G * brightness, 1.0);
+    B = min(B * brightness, 1.0);
 
     // apply gamma 2.2
     float gamma = 2.8;
