@@ -1,0 +1,3 @@
+[submodule "ext/Ink_Painting_Taichi"]
+	path = ext/Ink_Painting_Taichi
+	url = https://github.com/youy028/Ink_Painting_Taichi
